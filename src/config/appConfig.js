@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const config = {
+const appConfig = {
   MONGO_URI: process.env.MONGO_URI,
   PORT: process.env.PORT || 8000,
   NODE_ENV: process.env.NODE_ENV || 'development',
@@ -15,4 +15,4 @@ const config = {
   corsOrigin: process.env.CORS_ORIGIN,
 };
 
-module.exports = config;
+module.exports = appConfig;
