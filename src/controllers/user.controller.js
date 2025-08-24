@@ -9,6 +9,22 @@ const {
   deleteFromCloudinary,
 } = require('../utils/cloudinary');
 
+const generateAccessAndRefreshTokens = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(500, "Error generating tokens");
+  }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   //Get user details from request
   const { username, email, fullName, password } = req.body;
@@ -86,6 +102,71 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, createdUser, 'User registered successfully'));
 });
 
+const loginUser = asyncHandler(async (req, res) => {
+  // Get credentials from request
+  const { email, username, password } = req.body;
+
+  // Validate required fields
+  if (!email && !username) {
+    throw new ApiError(400, "Email or username is required");
+  }
+
+  if (!password) {
+    throw new ApiError(400, "Password is required");
+  }
+
+  // Find user
+  const user = await User.findOne({
+    $or: [{ email }, { username }],
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Check if password is correct
+  const isPasswordValid = await user.isPasswordCorrect(password);
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid credentials");
+  }
+
+  // Generate tokens
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+
+  // Get user without sensitive fields
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  // Set cookies
+  const cookieOptions = {
+    httpOnly: true, //Not accessible to JavaScript
+    sameSite: "Strict", //CSRF protection
+    secure: process.env.NODE_ENV === "production",
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "User logged in successfully"
+      )
+    );
+});
+
+
 module.exports = {
   registerUser,
+  loginUser,
 };

@@ -30,6 +30,9 @@ userRouter.post(
   registerUser
 );
 
+userRouter.post("/login", loginUser);
+
+
 module.exports = userRouter;
 
 
