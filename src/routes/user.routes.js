@@ -32,6 +32,8 @@ userRouter.post(
 
 userRouter.post("/login", loginUser);
 
+userRouter.post("/logout", logoutUser);
+
 
 module.exports = userRouter;
 

@@ -165,8 +165,34 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
+const logoutUser = asyncHandler(async (req, res) => {
+  //Clear refresh token in database
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: { refreshToken: null },
+    },
+    { new: true }
+  );
+  //Clear cookie with all required options
+  const cookieOptions = {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: appConfig.nodeEnv === "production",
+    path: "/",
+    expires: new Date(0),
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
+    .json(new ApiResponse(200, {}, "User logged out successfully"));
+});
+
 
 module.exports = {
   registerUser,
   loginUser,
+  logoutUser,
 };
