@@ -1,4 +1,5 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 
 const {
   registerUser,
@@ -16,7 +17,7 @@ const {
   updateCoverImage,
 } = require("../controllers/user.controller");
 const { upload } = require("../middlewares/multer.middleware");
-//const verifyJWT = require("../middlewares/auth.middleware");
+const verifyJWT = require("../middlewares/auth.middleware");
 
 const userRouter = express.Router();
 
@@ -32,7 +33,7 @@ userRouter.post(
 
 userRouter.post("/login", loginUser);
 
-userRouter.post("/logout", logoutUser);
+userRouter.post("/logout", verifyJWT, logoutUser);
 
 
 module.exports = userRouter;

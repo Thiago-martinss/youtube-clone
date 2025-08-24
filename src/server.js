@@ -1,5 +1,6 @@
 const express = require('express');
 const connectDB = require('./config/db');
+const cookieParser = require('cookie-parser');
 const userRouter = require('./routes/user.routes');
 require ('dotenv').config();
 
@@ -7,7 +8,9 @@ require ('dotenv').config();
 const app = express();
 
 connectDB();
+
 app.use(express.json()); 
+app.use(cookieParser());
 
 //Routes
 app.use("/api/v1/users", userRouter);
