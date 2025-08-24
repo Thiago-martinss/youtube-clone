@@ -32,8 +32,17 @@ userRouter.post(
 );
 
 userRouter.post("/login", loginUser);
+userRouter.post("/refresh-token", refreshAccessToken);
 
-userRouter.post("/logout", verifyJWT, logoutUser);
+
+
+//Protected routes
+userRouter.use(verifyJWT);
+userRouter.post("/logout", logoutUser);
+userRouter.patch("/change-password", changePassword);
+
+
+
 
 
 module.exports = userRouter;
