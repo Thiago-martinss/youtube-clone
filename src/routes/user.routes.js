@@ -39,7 +39,10 @@ userRouter.post("/refresh-token", refreshAccessToken);
 //Protected routes
 userRouter.use(verifyJWT);
 userRouter.post("/logout", logoutUser);
-userRouter.patch("/change-password", changePassword);
+userRouter.patch("/change-password", changePassword)
+userRouter.get("/current-user", getCurrentUser);
+
+
 
 
 
