@@ -328,6 +328,45 @@ const updateAvatar = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedUser, 'Avatar updated'));
 });
 
+const updateCoverImage = asyncHandler(async (req, res) => {
+  //Get cover image file
+  const coverImageLocalPath = req.file.path;
+  if (!coverImageLocalPath) {
+    throw new ApiError(400, 'Cover image file is required');
+  }
+  //get current user
+  const user = await User.findById(req.user._id);
+  //Delete old avatar
+  if (user?.coverImage?.public_id) {
+    await deleteFromCloudinary(user?.coverImage?.public_id);
+  }
+  //Upload new Cover Image
+  const uploadResult = await uploadToCloudinary(
+    coverImageLocalPath,
+    'youtube/coverImages'
+  );
+  if (!uploadResult) {
+    throw new ApiError(500, 'Error uploading Cover Image');
+  }
+  //Update the user
+  const updatedUser = await User.findByIdAndUpdate(
+    req?.user?._id,
+    {
+      $set: {
+        coverImage: {
+          public_id: uploadResult.public_id,
+          url: uploadResult.secure_url,
+        },
+      },
+    },
+    { new: true }
+  ).select('-password -refreshToken');
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, 'Cover image updated'));
+});
+
 module.exports = {
   registerUser,
   loginUser,
@@ -337,4 +376,5 @@ module.exports = {
   getCurrentUser,
   updateAccountDetails,
   updateAvatar,
+  updateCoverImage,
 };

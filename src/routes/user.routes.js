@@ -43,6 +43,7 @@ userRouter.patch("/change-password", changePassword)
 userRouter.get("/current-user", getCurrentUser);
 userRouter.patch("/update-account", updateAccountDetails);
 userRouter.patch("/update-avatar", upload.single("avatar"), updateAvatar);
+userRouter.patch("/update-cover-image", upload.single("coverImage"), updateCoverImage);
 
 
 
