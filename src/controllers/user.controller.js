@@ -21,7 +21,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
     return { accessToken, refreshToken };
   } catch (error) {
-    throw new ApiError(500, "Error generating tokens");
+    throw new ApiError(500, 'Error generating tokens');
   }
 };
 
@@ -108,11 +108,11 @@ const loginUser = asyncHandler(async (req, res) => {
 
   // Validate required fields
   if (!email && !username) {
-    throw new ApiError(400, "Email or username is required");
+    throw new ApiError(400, 'Email or username is required');
   }
 
   if (!password) {
-    throw new ApiError(400, "Password is required");
+    throw new ApiError(400, 'Password is required');
   }
 
   // Find user
@@ -121,14 +121,14 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    throw new ApiError(404, "User not found");
+    throw new ApiError(404, 'User not found');
   }
 
   // Check if password is correct
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid credentials");
+    throw new ApiError(401, 'Invalid credentials');
   }
 
   // Generate tokens
@@ -138,20 +138,20 @@ const loginUser = asyncHandler(async (req, res) => {
 
   // Get user without sensitive fields
   const loggedInUser = await User.findById(user._id).select(
-    "-password -refreshToken"
+    '-password -refreshToken'
   );
 
   // Set cookies
   const cookieOptions = {
     httpOnly: true, //Not accessible to JavaScript
-    sameSite: "Strict", //CSRF protection
-    secure: process.env.NODE_ENV === "production",
+    sameSite: 'Strict', //CSRF protection
+    secure: process.env.NODE_ENV === 'production',
   };
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, cookieOptions)
-    .cookie("refreshToken", refreshToken, cookieOptions)
+    .cookie('accessToken', accessToken, cookieOptions)
+    .cookie('refreshToken', refreshToken, cookieOptions)
     .json(
       new ApiResponse(
         200,
@@ -160,7 +160,7 @@ const loginUser = asyncHandler(async (req, res) => {
           accessToken,
           refreshToken,
         },
-        "User logged in successfully"
+        'User logged in successfully'
       )
     );
 });
@@ -177,17 +177,17 @@ const logoutUser = asyncHandler(async (req, res) => {
   //Clear cookie with all required options
   const cookieOptions = {
     httpOnly: true,
-    sameSite: "strict",
-    secure: appConfig.nodeEnv === "production",
-    path: "/",
+    sameSite: 'strict',
+    secure: appConfig.nodeEnv === 'production',
+    path: '/',
     expires: new Date(0),
   };
 
   return res
     .status(200)
-    .clearCookie("accessToken", cookieOptions)
-    .clearCookie("refreshToken", cookieOptions)
-    .json(new ApiResponse(200, {}, "User logged out successfully"));
+    .clearCookie('accessToken', cookieOptions)
+    .clearCookie('refreshToken', cookieOptions)
+    .json(new ApiResponse(200, {}, 'User logged out successfully'));
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -197,7 +197,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       req?.cookies?.refreshToken || req.body.refreshToken;
 
     if (!incomingRefreshToken) {
-      throw new ApiError(401, "Refresh token is required");
+      throw new ApiError(401, 'Refresh token is required');
     }
     //Verify the refresh token
     const decodedToken = jwt.verify(
@@ -207,10 +207,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     //Find the user with ths refresh token
     const user = await User.findById(decodedToken._id);
     if (!user) {
-      throw new ApiError(401, "Invalid refresh token");
+      throw new ApiError(401, 'Invalid refresh token');
     }
     if (incomingRefreshToken !== user.refreshToken) {
-      throw new ApiError(401, "Refresh token is expired or used");
+      throw new ApiError(401, 'Refresh token is expired or used');
     }
     //Generate new tokens
     const { accessToken, refreshToken: newRefreshToken } =
@@ -218,14 +218,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     //Set cookies
     const cookieOptions = {
       httpOnly: true,
-      sameSite: "strict",
-      secure: appConfig.nodeEnv === "production",
+      sameSite: 'strict',
+      secure: appConfig.nodeEnv === 'production',
     };
 
     return res
       .status(200)
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", newRefreshToken, cookieOptions)
+      .cookie('accessToken', accessToken, cookieOptions)
+      .cookie('refreshToken', newRefreshToken, cookieOptions)
       .json(
         new ApiResponse(
           200,
@@ -233,25 +233,25 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             accessToken,
             refreshToken: newRefreshToken,
           },
-          "Access token refreshed successfully"
+          'Access token refreshed successfully'
         )
       );
   } catch (error) {
-    throw new ApiError(401, error?.message || "Invalid Refresh token");
+    throw new ApiError(401, error?.message || 'Invalid Refresh token');
   }
 });
 
 const changePassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   if (!oldPassword || !newPassword) {
-    throw new ApiError(400, "Old password and new password are required");
+    throw new ApiError(400, 'Old password and new password are required');
   }
   //Find the user with password
   const user = await User.findById(req.user._id);
   //Check if old password is correct
   const isPasswordValid = await user.isPasswordCorrect(oldPassword);
   if (!isPasswordValid) {
-    throw new ApiError(400, "Invalid Old password ");
+    throw new ApiError(400, 'Invalid Old password ');
   }
   //Update password
   user.password = newPassword;
@@ -259,19 +259,19 @@ const changePassword = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "Password changed successfully"));
+    .json(new ApiResponse(200, {}, 'Password changed successfully'));
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
-    .json(new ApiResponse(200, req.user, "Current user fetched successfully"));
+    .json(new ApiResponse(200, req.user, 'Current user fetched successfully'));
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { fullName, email } = req.body;
   if (!fullName && !email) {
-    throw new ApiError(400, "At least one field is required");
+    throw new ApiError(400, 'At least one field is required');
   }
   //Update user
   const user = await User.findByIdAndUpdate(
@@ -283,10 +283,49 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
       },
     },
     { new: true }
-  ).select("-password -refreshToken");
+  ).select('-password -refreshToken');
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "Account details updated successfully"));
+    .json(new ApiResponse(200, user, 'Account details updated successfully'));
+});
+
+const updateAvatar = asyncHandler(async (req, res) => {
+  //Get avatar file
+  const avatarLocalPath = req.file.path;
+  if (!avatarLocalPath) {
+    throw new ApiError(400, 'Avatar file is required');
+  }
+  //get current user
+  const user = await User.findById(req.user._id);
+  //Delete old avatar
+  if (user?.avatar?.public_id) {
+    await deleteFromCloudinary(user?.avatar?.public_id);
+  }
+  //Upload new Avatar
+  const uploadResult = await uploadToCloudinary(
+    avatarLocalPath,
+    'youtube/avatars'
+  );
+  if (!uploadResult) {
+    throw new ApiError(500, 'Error uploading avatar');
+  }
+  //Update the user
+  const updatedUser = await User.findByIdAndUpdate(
+    req?.user?._id,
+    {
+      $set: {
+        avatar: {
+          public_id: uploadResult.public_id,
+          url: uploadResult.secure_url,
+        },
+      },
+    },
+    { new: true }
+  ).select('-password -refreshToken');
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, 'Avatar updated'));
 });
 
 module.exports = {
@@ -297,5 +336,5 @@ module.exports = {
   changePassword,
   getCurrentUser,
   updateAccountDetails,
-  
+  updateAvatar,
 };
