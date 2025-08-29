@@ -41,6 +41,8 @@ userRouter.use(verifyJWT);
 userRouter.post("/logout", logoutUser);
 userRouter.patch("/change-password", changePassword)
 userRouter.get("/current-user", getCurrentUser);
+userRouter.patch("/update-account", updateAccountDetails);
+
 
 
 
