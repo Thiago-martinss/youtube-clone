@@ -25,6 +25,63 @@ const getChannelInfo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, channel, "Channel fetched successfully"));
 });
 
+const updateChannelInfo = asyncHandler(async (req, res) => {
+  const { channelDescription, channelTags, socialLinks } = req.body;
+  //Prepare update object
+  const updateData = {};
+  if (channelDescription !== undefined) {
+    updateData.channelDescription = channelDescription;
+  }
+  if (channelTags !== undefined) {
+    updateData.channelDescription = channelDescription;
+    updateData.channelTags = Array.isArray(channelTags)
+      ? channelTags
+      : JSON.parse(channelTags);
+  }
+
+  if (socialLinks !== undefined) {
+    updateData.socialLinks =
+      typeof socialLinks === "object" ? socialLinks : JSON.parse(socialLinks);
+  }
+
+  // Update channel cover image if provided
+  let coverImageUpdate = {};
+  if (req?.files?.coverImage?.[0]?.path) {
+    const coverImageLocalPath = req?.files?.coverImage?.[0]?.path;
+    // Delete old cover image if exists
+    if (req?.user?.coverImage) {
+      await deleteFromCloudinary(req?.user?.coverImage?.public_id, "/image");
+    }
+    //Upload new cover image
+    const uploadResult = await uploadToCloudinary(
+      coverImageLocalPath,
+      "youtube/cover-images"
+    );
+    if (!uploadResult) {
+      throw new ApiError(500, "Error uploading cover image");
+    }
+    coverImageUpdate.coverImage = {
+      public_id: uploadResult.public_id,
+      url: uploadResult.secure_url,
+    };
+  }
+
+  //Merge updates
+  const updateObject = {
+    ...updateData,
+    ...coverImageUpdate,
+  };
+
+  //Update the user
+  const updatedUser = await User.findByIdAndUpdate(req.user._id, updateObject, {
+    new: true,
+  }).select("-password -refreshToken");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, "Channel updated successfully"));
+});
+
 module.exports = {
   getChannelInfo,
+  updateChannelInfo,
 };
