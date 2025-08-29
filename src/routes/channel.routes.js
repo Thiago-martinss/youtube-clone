@@ -13,8 +13,7 @@ const channelRouter = express.Router();
 
 //Public Routes
 channelRouter.get('/:username', getChannelInfo);
-
-channelRouter.get('/:username/videos', getChannelVideos);
+//channelRouter.get('/:username/videos', getChannelVideos);
 
 //channel Customization
 channelRouter.patch(
@@ -22,5 +21,9 @@ channelRouter.patch(
   upload.fields([{ name: 'coverImage', maxCount: 1 }]),
   updateChannelInfo
 );
+
+//Notification settings
+channelRouter.patch("/notification-settings", updateNotificationSettings);
+
 
 module.exports = channelRouter;

@@ -81,7 +81,55 @@ const updateChannelInfo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedUser, "Channel updated successfully"));
 });
 
+const updateNotificationSettings = asyncHandler(async (req, res) => {
+  const { emailNotification, subscriptionActivity, commentActivity } = req.body;
+
+  //Prepare update object
+  const notificationSettings = {};
+  if (emailNotification !== undefined) {
+    notificationSettings["notificationSettings.emailNotification"] =
+      emailNotification;
+  }
+
+  if (subscriptionActivity !== undefined) {
+    notificationSettings["notificationSettings.subscriptionActivity"] =
+      subscriptionActivity;
+  }
+
+  if (commentActivity !== undefined) {
+    notificationSettings["notificationSettings.commentActivity"] =
+      commentActivity;
+  }
+
+  if (Object.keys(notificationSettings).length === 0) {
+    throw new ApiError(400, "No settings provided to update");
+  }
+  //Update the user
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: notificationSettings,
+    },
+    { new: true }
+  ).select("notificationSetting");
+  if (!updatedUser) {
+    throw new ApiError(500, "Error updating notification settings");
+  }
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updatedUser.notificationSettings,
+        "Notification settings updated successfully"
+      )
+    );
+});
+
+
 module.exports = {
   getChannelInfo,
   updateChannelInfo,
+  //getChannelVideos,
+  updateNotificationSettings
 };

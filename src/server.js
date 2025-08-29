@@ -3,6 +3,7 @@ const connectDB = require('./config/db');
 const cookieParser = require('cookie-parser');
 const userRouter = require('./routes/user.routes');
 const channelRouter = require('./routes/channel.routes');
+const videoRouter = require('./routes/video.routes');
 const { errorHandler, notFound } = require('./middlewares/error.middleware');
 require ('dotenv').config();
 
@@ -17,6 +18,7 @@ app.use(cookieParser());
 //Routes
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/channels", channelRouter);
+app.use("/api/v1/videos", videoRouter);
 
 //Error middleware
 app.use(errorHandler);
