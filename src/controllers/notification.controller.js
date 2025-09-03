@@ -88,8 +88,43 @@ const getUserNotifications = asyncHandler(async (req, res) => {
   );
 });
 
+const createNotification = async (recipientId, senderId, type, content) => {
+  try {
+    // Check if recipient has enabled notifications for this type
+    const recipient = await User.findById(recipientId);
+    if (!recipient) {
+      return null;
+    }
+    //Check notification settings
+    if (
+      (type === "SUBSCRIPTION" &&
+        recipient.notificationSettings?.subscriptionActivity === false) ||
+      ((type === "COMMENT" || type === "REPLY") &&
+        recipient.notificationSettings.commentActivity == false)
+    ) {
+      // Notifications for this type are disabled by the user
+      return null;
+    }
+
+    //Create notification
+    const notification = await Notification.create({
+      recipient: recipientId,
+      sender: senderId,
+      type,
+      content,
+    });
+    return notification;
+  } catch (error) {
+    console.log("Error creating  notification");
+
+    return null;
+  }
+};
+
+
 
 module.exports = {
   getUserNotifications,
+  createNotification
 
 };
