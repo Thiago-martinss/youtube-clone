@@ -7,6 +7,8 @@ const {
   deleteFromCloudinary,
   uploadToCloudinary,
 } = require("../utils/cloudinary");
+const ApiError = require('../utils/apiError');
+
 
 const publishVideo = asyncHandler(async (req, res) => {
   const { title, description, category, tags } = req.body;
@@ -177,7 +179,44 @@ const getAllVideos = asyncHandler(async (req, res) => {
   );
 });
 
+const getVideoById = asyncHandler(async (req, res) => {
+  console.log(req.query);
+
+  const { videoId } = req.params;
+  if (!videoId) {
+    throw new ApiError(400, "Video Id is required");
+  }
+  //Find the video and update views
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $inc: { views: 1 },
+    },
+    { new: true }
+  ).populate("owner", "username fullName avatar");
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+  //Add to user's watch history
+  if (req.user) {
+    console.log(req.user);
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $addToSet: { watchHistory: videoId },
+      },
+      { new: true }
+    );
+    console.log(user);
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video fetched successfully"));
+});
+
 module.exports = {
   publishVideo,
   getAllVideos,
+  getVideoById,
 };

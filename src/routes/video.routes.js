@@ -1,15 +1,19 @@
 const express = require('express');
 const verifyJWT = require('../middlewares/auth.middleware');
 const { upload } = require('../middlewares/multer.middleware');
-const { publishVideo, getAllVideos } = require('../controllers/video.controller');
+const {
+  publishVideo,
+  getAllVideos,
+  getVideoById,
+} = require('../controllers/video.controller');
 
 const videoRouter = express.Router();
 
 //Public routes
-videoRouter.get("/", getAllVideos);
-
+videoRouter.get('/', getAllVideos);
 
 //Protected routes
+videoRouter.use(verifyJWT);
 videoRouter.post(
   '/',
   upload.fields([
@@ -18,5 +22,6 @@ videoRouter.post(
   ]),
   publishVideo
 );
+videoRouter.get('/:videoId', getVideoById);
 
 module.exports = videoRouter;
