@@ -1,11 +1,13 @@
 const express = require('express');
 const verifyJWT = require('../middlewares/auth.middleware');
 const { upload } = require('../middlewares/multer.middleware');
-const { publishVideo } = require('../controllers/video.controller');
+const { publishVideo, getAllVideos } = require('../controllers/video.controller');
 
 const videoRouter = express.Router();
 
 //Public routes
+videoRouter.get("/", getAllVideos);
+
 
 //Protected routes
 videoRouter.post(
