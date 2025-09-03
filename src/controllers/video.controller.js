@@ -215,8 +215,105 @@ const getVideoById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, video, "Video fetched successfully"));
 });
 
+const updateVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const { title, description, category, tags, isPublished } = req.body;
+  if (!videoId) {
+    throw new ApiError(400, "Video ID is required");
+  }
+  //Check if video exists and belongs to user
+  const video = await Video.findOne({
+    _id: videoId,
+    owner: req.user._id,
+  });
+  if (!video) {
+    throw new ApiError(400, "Video not found or you don't have permission");
+  }
+  //Update thumbnail if uploaded
+  let thumbnailUpdate = {};
+  if (req.file) {
+    const thumbnailLocalPath = req.file.path;
+    if (thumbnailLocalPath) {
+      //Delete the old thumbnail
+      if (video?.thumbnail?.public_id) {
+        await deleteFromCloudinary(video?.thumbnail?.public_id);
+      }
+      //Upload new thumbnail
+      const thumbnailUpload = await uploadToCloudinary(
+        thumbnailLocalPath,
+        "youtube/thumbnails"
+      );
+      if (!thumbnailUpload) {
+        throw new ApiError(500, "Error uploading thumbnail");
+      }
+      thumbnailUpdate = {
+        thumbnail: {
+          public_id: thumbnailUpload.public_id,
+          url: thumbnailUpload.secure_url,
+        },
+      };
+    }
+  }
+  //Update video details
+  const updateVideo = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        title: title || video.title,
+        description: description || video.description,
+        category: category || video.category,
+        isPublished:
+          isPublished !== undefined ? isPublished : video.isPublished,
+        tags: tags ? JSON.parse(tags) : video.tags,
+        ...thumbnailUpdate,
+      },
+    },
+    { new: true }
+  ).populate("owner", "username fullName avatar");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updateVideo, "Video updated successfully"));
+});
+
+const deleteVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!videoId) {
+    throw new ApiError(400, "Video ID is required");
+  }
+
+  // Check if video exists and belongs to user
+  const video = await Video.findOne({
+    _id: videoId,
+    owner: req.user._id,
+  });
+
+  if (!video) {
+    throw new ApiError(404, "Video not found or you don't have permission");
+  }
+
+  // Delete video from Cloudinary
+  if (video.videoFile?.public_id) {
+    await deleteFromCloudinary(video.videoFile.public_id, "video");
+  }
+
+  // Delete thumbnail from Cloudinary
+  if (video.thumbnail?.public_id) {
+    await deleteFromCloudinary(video.thumbnail.public_id);
+  }
+
+  // Delete video from database
+  await Video.findByIdAndDelete(videoId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Video deleted successfully"));
+});
+
 module.exports = {
   publishVideo,
   getAllVideos,
   getVideoById,
+  updateVideo,
+  deleteVideo,
 };

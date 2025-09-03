@@ -5,6 +5,8 @@ const {
   publishVideo,
   getAllVideos,
   getVideoById,
+  updateVideo,
+  deleteVideo
 } = require('../controllers/video.controller');
 
 const videoRouter = express.Router();
@@ -23,5 +25,7 @@ videoRouter.post(
   publishVideo
 );
 videoRouter.get('/:videoId', getVideoById);
+videoRouter.patch('/:videoId', upload.single('thumbnail'), updateVideo);
+videoRouter.delete('/:videoId', deleteVideo);
 
 module.exports = videoRouter;
