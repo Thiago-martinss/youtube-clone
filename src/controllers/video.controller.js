@@ -310,10 +310,49 @@ const deleteVideo = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Video deleted successfully"));
 });
 
+const togglePublishStatus = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!videoId) {
+    throw new ApiError(400, "Video ID is required");
+  }
+
+  // Check if video exists and belongs to user
+  const video = await Video.findOne({
+    _id: videoId,
+    owner: req.user._id,
+  });
+
+  if (!video) {
+    throw new ApiError(404, "Video not found or you don't have permission");
+  }
+  //Toggle publish status
+  const updateVideo = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: { isPublished: !video.isPublished },
+    },
+    { new: true }
+  ).populate("owner", "username fullName avatar");
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updateVideo,
+        `Video ${
+          updateVideo.isPublished ? "published" : "unpublished"
+        } successfully`
+      )
+    );
+});
+
 module.exports = {
   publishVideo,
   getAllVideos,
   getVideoById,
   updateVideo,
   deleteVideo,
+  togglePublishStatus,
+  
 };
