@@ -46,7 +46,61 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, playlist, "Video added to playlist"));
 });
 
+const getUserPlaylists = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const userIdToUse = userId || req.user._id;
+  if (!userIdToUse) {
+    throw new ApiError(400, "User ID is required");
+  }
+  const isOwner = req.user._id.toString() === userIdToUse.toString();
+  // If not the owner, only return public playlists
+  const matchCondition = {
+    owner: new mongoose.Types.ObjectId(userIdToUse),
+    ...(isOwner ? {} : { isPublic: true }),
+  };
+  const playlists = await Playlist.aggregate([
+    {
+      $match: matchCondition,
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "videos",
+        foreignField: "_id",
+        as: "videos",
+        pipeline: [
+          {
+            $project: {
+              _id: 1,
+              title: 1,
+              thumbnail: 1,
+              duration: 1,
+              views: 1,
+              createdAt: 1,
+              videoFile: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        videoCount: { $size: "$videos" },
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+  ]);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, playlists, "Playlists fetched successfully"));
+});
+
 module.exports = {
   createPlaylist,
-  addVideoToPlaylist
+  addVideoToPlaylist,
+  getUserPlaylists,
 };
