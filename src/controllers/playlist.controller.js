@@ -99,8 +99,93 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, playlists, "Playlists fetched successfully"));
 });
 
+const getPlaylistById = asyncHandler(async (req, res) => {
+  const { playlistId } = req.params;
+  if (!playlistId) {
+    throw new ApiError(400, "Playlist ID is required");
+  }
+  const playlist = await Playlist.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(playlistId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              fullName: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "videos",
+        foreignField: "_id",
+        as: "videos",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              as: "owner",
+              foreignField: "_id",
+              pipeline: [
+                {
+                  $project: {
+                    username: 1,
+                    fullName: 1,
+                    avatar: 1,
+                  },
+                },
+                {
+                  $addFields: {
+                    owner: { $first: "$owner" },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        owner: { $first: "$owner" },
+        videoCount: { $size: "$videos" },
+      },
+    },
+  ]);
+
+  if (!playlist.length) {
+    throw new ApiError(404, "Playlist not found");
+  }
+  const playlistData = playlist[0];
+  // Check if playlist is private and user is not the owner
+  if (
+    !playlistData.isPublic &&
+    (!req.user || playlistData.owner._id.toString() !== req.user._id.toString())
+  ) {
+    throw new ApiError(403, "You don't have permission to view this playlist");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, playlistData, "Playlist fetched successfully"));
+});
+
 module.exports = {
   createPlaylist,
   addVideoToPlaylist,
   getUserPlaylists,
+  getPlaylistById,
 };
