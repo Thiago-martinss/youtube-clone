@@ -1,7 +1,6 @@
 const appConfig = require("../config/appConfig");
 const ApiError = require("../utils/apiError");
 
-
 //Error handling middleware
 const errorHandler = (err, req, res, next) => {
   let error = err;
