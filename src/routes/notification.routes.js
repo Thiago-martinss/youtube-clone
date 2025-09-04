@@ -21,4 +21,7 @@ notificationRouter.patch('/mark-all-read', markAllNotificationsAsRead);
 //Mark notification as read
 notificationRouter.patch('/:notificationId', markNotificationAsRead);
 
+//Delete a notification
+notificationRouter.delete('/:notificationId', deleteNotification);
+
 module.exports = notificationRouter;

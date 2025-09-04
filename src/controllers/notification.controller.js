@@ -162,6 +162,26 @@ const markAllNotificationsAsRead = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "All notifications marked as read"));
 });
 
+//@Desc: Delete a specific notification
+//@route: DELETE /api/v1/notifications/:notificationId
+//Access:Private
+const deleteNotification = asyncHandler(async (req, res) => {
+  const { notificationId } = req.params;
+  if (!notificationId) {
+    throw new ApiError(400, "Notification is required");
+  }
+  const notification = await Notification.findByIdAndDelete({
+    _id: notificationId,
+    recipient: req.user._id,
+  });
+  if (!notification) {
+    throw new ApiError(404, "Notification not found");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Notification deleted successfully"));
+});
+
 
 
 
@@ -169,6 +189,7 @@ module.exports = {
   getUserNotifications,
   createNotification,
   markNotificationAsRead,
-  markAllNotificationsAsRead
+  markAllNotificationsAsRead,
+  deleteNotification
 
 };
