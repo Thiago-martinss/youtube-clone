@@ -121,10 +121,54 @@ const createNotification = async (recipientId, senderId, type, content) => {
   }
 };
 
+const markNotificationAsRead = asyncHandler(async (req, res) => {
+  const { notificationId } = req.params;
+  if (!notificationId) {
+    throw new ApiError(400, "Notification ID is required");
+  }
+  const notification = await Notification.findByIdAndUpdate(
+    {
+      _id: notificationId,
+      recipient: req.user._id,
+    },
+    {
+      $set: { read: true },
+    },
+    { new: true }
+  );
+  if (!notification) {
+    throw new ApiError(404, "Notification not found");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, notification, "Notification marked as read"));
+});
+
+//@Desc: Mark all user's notifications as read
+//@route: PATCH /api/v1/notifications/mark-all-read
+//Access:Private
+const markAllNotificationsAsRead = asyncHandler(async (req, res) => {
+  await Notification.updateMany(
+    {
+      recipient: req.user._id,
+      read: false,
+    },
+    {
+      $set: { read: false },
+    }
+  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "All notifications marked as read"));
+});
+
+
 
 
 module.exports = {
   getUserNotifications,
-  createNotification
+  createNotification,
+  markNotificationAsRead,
+  markAllNotificationsAsRead
 
 };

@@ -1,11 +1,11 @@
-const express = require("express");
+const express = require('express');
 const {
   getUserNotifications,
   markAllNotificationsAsRead,
   markNotificationAsRead,
   deleteNotification,
-} = require("../controllers/notification.controller");
-const verifyJWT = require("../middlewares/auth.middleware");
+} = require('../controllers/notification.controller');
+const verifyJWT = require('../middlewares/auth.middleware');
 
 const notificationRouter = express.Router();
 
@@ -13,6 +13,12 @@ const notificationRouter = express.Router();
 notificationRouter.use(verifyJWT);
 
 //Get user notification
-notificationRouter.get("/", getUserNotifications);
+notificationRouter.get('/', getUserNotifications);
+
+//Mark all notifications as read
+notificationRouter.patch('/mark-all-read', markAllNotificationsAsRead);
+
+//Mark notification as read
+notificationRouter.patch('/:notificationId', markNotificationAsRead);
 
 module.exports = notificationRouter;
