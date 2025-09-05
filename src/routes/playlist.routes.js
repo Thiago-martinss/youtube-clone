@@ -3,7 +3,8 @@ const {
   createPlaylist,
   addVideoToPlaylist,
   getUserPlaylists,
-  getPlaylistById
+  getPlaylistById,
+  removeVideoFromPlaylist,
 } = require('../controllers/playlist.controller');
 const verifyJWT = require('../middlewares/auth.middleware');
 
@@ -13,12 +14,18 @@ const playlistRouter = express.Router();
 playlistRouter.post('/', verifyJWT, createPlaylist);
 
 // Get user playlists
-playlistRouter.post("/user", verifyJWT, getUserPlaylists);
-playlistRouter.get("/user/:userId", verifyJWT, getUserPlaylists);
+playlistRouter.post('/user', verifyJWT, getUserPlaylists);
+playlistRouter.get('/user/:userId', verifyJWT, getUserPlaylists);
 //Get playlist by ID
-playlistRouter.get("/:playlistId", getPlaylistById);
+playlistRouter.get('/:playlistId', getPlaylistById);
 
 //Add/remove videos from playlist
 playlistRouter.post('/:playlistId/add/:videoId', verifyJWT, addVideoToPlaylist);
+
+playlistRouter.patch(
+  '/:playlistId/remove/:videoId',
+  verifyJWT,
+  removeVideoFromPlaylist
+);
 
 module.exports = playlistRouter;
