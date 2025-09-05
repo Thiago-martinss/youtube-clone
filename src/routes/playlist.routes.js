@@ -6,7 +6,7 @@ const {
   getPlaylistById,
   removeVideoFromPlaylist,
   updatePlaylist,
-  deletePlaylist
+  deletePlaylist,
 } = require('../controllers/playlist.controller');
 const verifyJWT = require('../middlewares/auth.middleware');
 
@@ -23,6 +23,9 @@ playlistRouter.get('/:playlistId', getPlaylistById);
 
 //Update playlist
 playlistRouter.patch('/:playlistId', verifyJWT, updatePlaylist);
+
+//Delete playlist
+playlistRouter.delete('/:playlistId', verifyJWT, deletePlaylist);
 
 //Add/remove videos from playlist
 playlistRouter.post('/:playlistId/add/:videoId', verifyJWT, addVideoToPlaylist);
