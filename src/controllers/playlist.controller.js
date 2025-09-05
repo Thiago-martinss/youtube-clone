@@ -212,10 +212,40 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     );
 });
 
+const updatePlaylist = asyncHandler(async (req, res) => {
+  const { playlistId } = req.params;
+  const { name, description, isPublic } = req.body;
+  if (!playlistId) {
+    throw new ApiError(400, "Playlist ID is required");
+  }
+
+  if (!name && !description && isPublic === undefined) {
+    throw new ApiError(400, "At least one field is required");
+  }
+  // Check if playlist exists and belongs to user
+  const playlist = await Playlist.findOne({
+    _id: playlistId,
+    owner: req.user._id,
+  });
+  if (!playlist) {
+    throw new ApiError(404, "Playlist not found or you don't have permission");
+  }
+  //Update playlist fields
+  if (name) playlist.name = name;
+  if (description !== undefined) playlist.description = description;
+  if (isPublic !== undefined) playlist.isPublic = isPublic;
+  await playlist.save();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, playlist, "Playlist updated successfully"));
+});
+
+
 module.exports = {
   createPlaylist,
   addVideoToPlaylist,
   getUserPlaylists,
   getPlaylistById,
   removeVideoFromPlaylist,
+  updatePlaylist,
 };
