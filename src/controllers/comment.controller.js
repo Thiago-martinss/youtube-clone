@@ -90,6 +90,71 @@ const getVideoComments = asyncHandler(async (req, res) => {
   );
 });
 
+const addComment = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const { content, parentCommentId } = req.body;
+  if (!videoId) {
+    throw new ApiError(400, "Video ID is required");
+  }
+  if (!content || content.trim() == "") {
+    throw new ApiError(400, "Comment content is required");
+  }
+  //Create comment object
+  const commentData = {
+    content,
+    video: videoId,
+    owner: req.user._id,
+  };
+  // Add parent comment reference if provided
+  if (parentCommentId) {
+    // Check if parent comment exists
+    const parentComment = await Comment.findById(parentCommentId);
+    if (!parentComment) {
+      throw new ApiError(404, "parent comment not found");
+    }
+    commentData.parentComment = parentCommentId;
+  }
+
+  //Create comment
+  const comment = await Comment.create(commentData);
+  //Get populated comment
+  const populatedComment = await Comment.findById(comment._id).populate(
+    "owner",
+    "username fullName avatar"
+  );
+  //Send notifications
+  if (parentCommentId) {
+    // Reply notification - notify the comment owner
+    const parentComment = await Comment.findById(parentCommentId);
+    if (
+      parentComment &&
+      parentComment.owner.toString() !== req.user._id.toString()
+    ) {
+      await createNotification(
+        parentComment.owner,
+        req.user._id,
+        "REPLY",
+        `${req.user.fullName} replied to your comment`
+      );
+    }
+  } else {
+    // New comment notification - notify the video owner
+    const video = await Video.findById(videoId);
+    if (video && video.owner.toString() !== req.user._id.toString()) {
+      await createNotification(
+        video.owner,
+        req.user._id,
+        "COMMENT",
+        `${req.user.fullName} commented on your video`
+      );
+    }
+  }
+  return res
+    .status(201)
+    .json(new ApiResponse(201, populatedComment, "Comment added successfully"));
+});
+
 module.exports = {
   getVideoComments,
+  addComment,
 };

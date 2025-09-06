@@ -1,16 +1,17 @@
-const express = require("express");
-const verifyJWT = require("../middlewares/auth.middleware");
+const express = require('express');
+const verifyJWT = require('../middlewares/auth.middleware');
 const {
   getVideoComments,
-
-} = require("../controllers/comment.controller");
-
+  addComment,
+} = require('../controllers/comment.controller');
 
 const commentRouter = express.Router();
 
+// Get comments for a video
 
-commentRouter.get("/video/:videoId", getVideoComments);
+commentRouter.get('/video/:videoId', getVideoComments);
 
-
+// Add a comment to a video
+commentRouter.post('/video/:videoId', verifyJWT, addComment);
 
 module.exports = commentRouter;

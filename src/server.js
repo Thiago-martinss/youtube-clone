@@ -7,24 +7,25 @@ const videoRouter = require('./routes/video.routes');
 const notificationRouter = require('./routes/notification.routes');
 const playlistRouter = require('./routes/playlist.routes');
 const commentRouter = require('./routes/comment.routes');
+const likeRouter = require('./routes/like.routes');
 const { errorHandler, notFound } = require('./middlewares/error.middleware');
-require ('dotenv').config();
-
+require('dotenv').config();
 
 const app = express();
 
 connectDB();
 
-app.use(express.json()); 
+app.use(express.json());
 app.use(cookieParser());
 
 //Routes
-app.use("/api/v1/users", userRouter);
-app.use("/api/v1/channels", channelRouter);
-app.use("/api/v1/videos", videoRouter);
-app.use("/api/v1/notifications", notificationRouter);
-app.use("/api/v1/playlists", playlistRouter);
-app.use("/api/v1/comments", commentRouter);
+app.use('/api/v1/users', userRouter);
+app.use('/api/v1/channels', channelRouter);
+app.use('/api/v1/videos', videoRouter);
+app.use('/api/v1/notifications', notificationRouter);
+app.use('/api/v1/playlists', playlistRouter);
+app.use('/api/v1/comments', commentRouter);
+app.use('/api/v1/likes', likeRouter);
 
 //Error middleware
 app.use(errorHandler);
