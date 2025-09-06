@@ -10,7 +10,13 @@ const {
 
 const likesRouter = express.Router();
 
+
 //Toggle likes
 likesRouter.post('/toggle/video/:videoId', verifyJWT, toggleLikeVideo);
+likesRouter.post('/toggle/comment/:commentId', verifyJWT, toggleCommentLike);
+
+
+//Get likes
+likesRouter.get("/videos", verifyJWT, getLikedVideos);
 
 module.exports = likesRouter;
