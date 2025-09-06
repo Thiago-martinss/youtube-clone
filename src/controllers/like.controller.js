@@ -129,9 +129,58 @@ const getLikedVideos = asyncHandler(async (req, res) => {
   );
 });
 
+const getVideoLikes = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  if (!videoId) {
+    throw new ApiError(400, "Video Id is required");
+  }
+  const likes = await Like.aggregate([
+    {
+      $match: {
+        video: new mongoose.Types.ObjectId(videoId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "likedBy",
+        foreignField: "_id",
+        as: "likedBy",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              fullName: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        likedBy: { $first: "$likedBy" },
+      },
+    },
+  ]);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        likes,
+        totalLikes: likes.length,
+      },
+      "Video likes fetched successfully"
+    )
+  );
+});
+
 module.exports = {
   toggleLikeVideo,
   toggleCommentLike,
   getLikedVideos,
+  getVideoLikes,
+  
 
 };

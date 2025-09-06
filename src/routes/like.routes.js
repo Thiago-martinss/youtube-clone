@@ -18,5 +18,7 @@ likesRouter.post('/toggle/comment/:commentId', verifyJWT, toggleCommentLike);
 
 //Get likes
 likesRouter.get("/videos", verifyJWT, getLikedVideos);
+likesRouter.get("/videos/:videoId", verifyJWT, getVideoLikes);
+
 
 module.exports = likesRouter;
