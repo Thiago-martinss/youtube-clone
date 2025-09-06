@@ -6,6 +6,7 @@ const channelRouter = require('./routes/channel.routes');
 const videoRouter = require('./routes/video.routes');
 const notificationRouter = require('./routes/notification.routes');
 const playlistRouter = require('./routes/playlist.routes');
+const commentRouter = require('./routes/comment.routes');
 const { errorHandler, notFound } = require('./middlewares/error.middleware');
 require ('dotenv').config();
 
@@ -23,6 +24,7 @@ app.use("/api/v1/channels", channelRouter);
 app.use("/api/v1/videos", videoRouter);
 app.use("/api/v1/notifications", notificationRouter);
 app.use("/api/v1/playlists", playlistRouter);
+app.use("/api/v1/comments", commentRouter);
 
 //Error middleware
 app.use(errorHandler);
