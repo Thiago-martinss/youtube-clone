@@ -151,8 +151,131 @@ const getChannelDetailedAnalytics = asyncHandler(async (req, res) => {
   );
 });
 
+const updateChannelAnalytics = async (channelId) => {
+  try {
+    // Get total views, videos, likes and comments
+    const videosAggregate = await Video.aggregate([
+      {
+        $match: {
+          owner: new mongoose.Types.ObjectId(channelId),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalViews: { $sum: "$views" },
+          totalVideos: { $sum: 1 },
+        },
+      },
+    ]);
+    //Get total comments
+    const commentsCount = await Comment.countDocuments({
+      video: { $in: await Video.find({ owner: channelId }).distinct("_id") },
+    });
+
+    //Get total likes
+    const likesCount = await Like.countDocuments({
+      video: { $in: await Video.find({ owner: channelId }).distinct("_id") },
+    });
+
+    //Get total subscribers
+    const subscribersCount = await Subscription.countDocuments({
+      channel: channelId,
+    });
+    //prepare the data
+    const totalViews = videosAggregate[0]?.totalViews || 0;
+    const totalVideos = videosAggregate[0]?.totalVideos || 0;
+    // Get or create analytics document
+    const analytics = await ChannelAnalytic.findOne({ channel: channelId });
+    //Create today's stats
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get yesterday's analytics to calculate daily differences
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    // Find yesterday's stats if they exist
+    const yesterdayStats = analytics?.dailyStats?.find(
+      (stat) => new Date(stat.date).toDateString() === yesterday.toDateString()
+    );
+
+    // Calculate subscribers gained/lost today
+    const previousSubscribers = yesterdayStats
+      ? analytics.totalSubscribers || 0
+      : subscribersCount;
+
+    const subscribersGained = Math.max(
+      0,
+      subscribersCount - previousSubscribers
+    );
+    const subscribersLost = Math.max(0, previousSubscribers - subscribersCount);
+
+    //Create or update analytics
+    if (!analytics) {
+      //Create new analytics count
+      analytics = await ChannelAnalytic.create({
+        channel: channelId,
+        totalViews,
+        totalSubscribers: subscribersCount,
+        totalVideos,
+        totalLikes: likesCount,
+        totalComments: commentsCount,
+        dailyStats: [
+          {
+            date: today,
+            views: totalViews,
+            subscribersGained,
+            likes: likesCount,
+            comments: commentsCount,
+          },
+        ],
+      });
+    } else {
+      // Check if today's stats already exist
+      const todayStatsIndex = analytics.dailyStats.findIndex(
+        (stat) => new Date(stat.date).toDateString() === today.toDateString()
+      );
+      if (todayStatsIndex !== -1) {
+        // Update today's stats
+        analytics.dailyStats[todayStatsIndex] = {
+          date: today,
+          views: totalViews - (yesterdayStats?.views || 0),
+          subscribersGained,
+          subscribersLost,
+          likes: likesCount - (yesterdayStats?.likes || 0),
+          comments: commentsCount - (yesterdayStats?.comments || 0),
+        };
+      } else {
+        // Add today's stats
+        analytics.dailyStats.push({
+          date: today,
+          views: totalViews - (yesterdayStats?.views || 0),
+          subscribersGained,
+          subscribersLost,
+          likes: likesCount - (yesterdayStats?.likes || 0),
+          comments: commentsCount - (yesterdayStats?.comments || 0),
+        });
+      }
+      //Update the totals
+      analytics.totalViews = totalViews;
+      analytics.totalSubscribers = subscribersCount;
+      analytics.totalVideos = totalVideos;
+      analytics.totalLikes = likesCount;
+      analytics.totalComments = commentsCount;
+
+      //Resave
+      await analytics.save();
+    }
+    return analytics;
+  } catch (error) {
+    console.log("Error updating channel analytics", error);
+    return null;
+  }
+};
+
 module.exports = {
   getChannelAnalyticsOverview,
   getChannelDetailedAnalytics,
+  updateChannelAnalytics,
  
 };
