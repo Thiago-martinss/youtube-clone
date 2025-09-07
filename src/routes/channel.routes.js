@@ -8,6 +8,10 @@ const {
 } = require('../controllers/channel.controller');
 const verifyJWT = require('../middlewares/auth.middleware');
 const { upload } = require('../middlewares/multer.middleware');
+const {
+  getChannelAnalyticsOverview,
+} = require("../controllers/channelAnalytic.controller");
+
 
 const channelRouter = express.Router();
 
@@ -24,6 +28,13 @@ channelRouter.patch(
 
 //Notification settings
 channelRouter.patch("/notification-settings", updateNotificationSettings);
+
+//Analytic overview
+channelRouter.get(
+  "/analytics/overview",
+  verifyJWT,
+  getChannelAnalyticsOverview
+);
 
 
 module.exports = channelRouter;
