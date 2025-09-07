@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Like = require("../models/like.model");
-const ApiError = require("../utils/ApiError");
+const ApiError = require("../utils/apiError");
 const ApiResponse = require("../utils/ApiResponse");
 const asyncHandler = require("../utils/asyncHandler");
 const Video = require("../models/video.model");
@@ -154,7 +154,33 @@ const addComment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, populatedComment, "Comment added successfully"));
 });
 
+const updateComment = asyncHandler(async (req, res) => {
+  const { commentId } = req.params;
+  const { content } = req.body;
+  if (!commentId) {
+    throw new ApiError(400, "Comment Id is required");
+  }
+  if (!content || content.trim() === "") {
+    throw new ApiError(400, "Comment content is required");
+  }
+  // Check if comment exists and belongs to user
+  const comment = await Comment.findOne({
+    _id: commentId,
+    owner: req.user._id,
+  });
+  if (!comment) {
+    throw new ApiError(404, "Comment not found or you don't have permission");
+  }
+  //Update the comment
+  comment.content = content;
+  await comment.save();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, comment, "Comment updated successfully"));
+});
+
 module.exports = {
   getVideoComments,
   addComment,
+  updateComment,
 };
