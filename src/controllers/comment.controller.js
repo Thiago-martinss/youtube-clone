@@ -202,9 +202,73 @@ const deleteComment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Comment deleted successfully"));
 });
 
+const getCommentReplies = asyncHandler(async (req, res) => {
+  const { commentId } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+  if (!commentId) {
+    throw new ApiError(400, "Comment Id is required");
+  }
+
+  const replies = await Comment.aggregate([
+    {
+      $match: {
+        parentComment: new mongoose.Types.ObjectId(commentId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_d",
+        as: "owner",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              fullName: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        owner: { $first: "$owner" },
+      },
+    },
+    {
+      $sort: { created: -1 },
+    },
+    {
+      $skip: (Number(page) - 1) * Number(limit),
+    },
+    {
+      $limit: Number(limit),
+    },
+  ]);
+  //Get total replies count
+  const totalReplies = await Comment.countDocuments({
+    parentComment: commentId,
+  });
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        replies,
+        totalReplies,
+        currentPage: Number(page),
+        totalPages: Math.ceil(totalReplies / Number(limit)),
+      },
+      "Comment replies fetched successfully"
+    )
+  );
+});
+
 module.exports = {
   getVideoComments,
   addComment,
   updateComment,
   deleteComment,
+  getCommentReplies,
 };

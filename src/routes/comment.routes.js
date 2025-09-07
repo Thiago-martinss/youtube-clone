@@ -4,17 +4,20 @@ const {
   getVideoComments,
   addComment,
   updateComment,
-  deleteComment
+  deleteComment,
+  getCommentReplies
 } = require('../controllers/comment.controller');
 
 const commentRouter = express.Router();
 
 // Get comments for a video
-
 commentRouter.get('/video/:videoId', getVideoComments);
 
 // Add a comment to a video
 commentRouter.post('/video/:videoId', verifyJWT, addComment);
+
+// Get replies for a comment
+commentRouter.get("/:commentId/replies", getCommentReplies)
 
 //Update and delete comments
 commentRouter.patch("/:commentId", verifyJWT, updateComment);
