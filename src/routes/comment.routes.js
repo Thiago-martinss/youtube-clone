@@ -3,7 +3,8 @@ const verifyJWT = require('../middlewares/auth.middleware');
 const {
   getVideoComments,
   addComment,
-  updateComment
+  updateComment,
+  deleteComment
 } = require('../controllers/comment.controller');
 
 const commentRouter = express.Router();
@@ -17,6 +18,8 @@ commentRouter.post('/video/:videoId', verifyJWT, addComment);
 
 //Update and delete comments
 commentRouter.patch("/:commentId", verifyJWT, updateComment);
+commentRouter.delete("/:commentId", verifyJWT, deleteComment);
+
 
 
 module.exports = commentRouter;

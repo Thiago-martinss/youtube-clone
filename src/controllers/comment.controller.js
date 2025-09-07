@@ -179,8 +179,32 @@ const updateComment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, comment, "Comment updated successfully"));
 });
 
+const deleteComment = asyncHandler(async (req, res) => {
+  const { commentId } = req.params;
+  if (!commentId) {
+    throw new ApiError(400, "Comment Id is required");
+  }
+  // Check if comment exists and belongs to user
+  const comment = await Comment.findOne({
+    _id: commentId,
+    owner: req.user._id,
+  });
+  if (!comment) {
+    throw new ApiError(404, "Comment not found or you don't have permission");
+  }
+  // Delete comment and all replies
+  await Promise.all([
+    Comment.deleteMany({ parentComment: commentId }),
+    Comment.findByIdAndDelete(commentId),
+  ]);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Comment deleted successfully"));
+});
+
 module.exports = {
   getVideoComments,
   addComment,
   updateComment,
+  deleteComment,
 };
