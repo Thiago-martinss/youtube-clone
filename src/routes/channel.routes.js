@@ -10,14 +10,15 @@ const verifyJWT = require('../middlewares/auth.middleware');
 const { upload } = require('../middlewares/multer.middleware');
 const {
   getChannelAnalyticsOverview,
-} = require("../controllers/channelAnalytic.controller");
-
+  getChannelDetailedAnalytics,
+} = require('../controllers/channelAnalytic.controller');
 
 const channelRouter = express.Router();
 
 //Public Routes
-channelRouter.get('/:username', getChannelInfo);
-//channelRouter.get('/:username/videos', getChannelVideos);
+channelRouter.get("/:username", getChannelInfo);
+channelRouter.get("/:username/videos", getChannelVideos);
+channelRouter.get("/:username/share", getChannelShareLink);
 
 //channel Customization
 channelRouter.patch(
@@ -27,14 +28,14 @@ channelRouter.patch(
 );
 
 //Notification settings
-channelRouter.patch("/notification-settings", updateNotificationSettings);
+channelRouter.patch('/notification-settings', updateNotificationSettings);
 
 //Analytic overview
 channelRouter.get(
-  "/analytics/overview",
+  '/analytics/overview',
   verifyJWT,
   getChannelAnalyticsOverview
 );
-
+channelRouter.get('/analytics/details/:channelId', getChannelDetailedAnalytics);
 
 module.exports = channelRouter;
